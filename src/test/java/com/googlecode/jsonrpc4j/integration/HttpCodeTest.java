@@ -3,6 +3,7 @@ package com.googlecode.jsonrpc4j.integration;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import com.googlecode.jsonrpc4j.JsonRpcClientException;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import org.junit.Test;
 
@@ -18,8 +19,8 @@ public class HttpCodeTest extends BaseRestTest {
 
 	@Test
 	public void http405OnInvalidUrl() throws MalformedURLException {
-		expectedEx.expectMessage(anyOf(equalTo("405 HTTP method POST is not supported by this URL"), equalTo("404 Not Found")));
-		expectedEx.expect(HttpClientErrorException.class);
+		expectedEx.expectMessage(anyOf(equalTo("HTTP method POST is not supported by this URL"), equalTo("Not Found")));
+		expectedEx.expect(JsonRpcClientException.class);
 		FakeServiceInterface service = ProxyUtil.createClientProxy(FakeServiceInterface.class, getClient("error"));
 		service.doSomething();
 	}
