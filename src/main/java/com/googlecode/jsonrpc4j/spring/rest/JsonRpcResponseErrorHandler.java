@@ -18,23 +18,28 @@ import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
-public enum JsonRpcResponseErrorHandler
+public class JsonRpcResponseErrorHandler
 		implements ResponseErrorHandler {
 	
-	INSTANCE;
+	public static final JsonRpcResponseErrorHandler INSTANCE = new JsonRpcResponseErrorHandler();
 	
 	/**
 	 * for supported codes see {@link com.googlecode.jsonrpc4j.DefaultHttpStatusCodeProvider}
 	 */
 	private final Set<Integer> JSON_RPC_STATUES = new HashSet<Integer>();
-	
-	
-	private JsonRpcResponseErrorHandler() {
+
+	/**
+	 * Creates a {@link JsonRpcResponseErrorHandler}.
+	 */
+	JsonRpcResponseErrorHandler() {
 		JSON_RPC_STATUES.add(HttpURLConnection.HTTP_INTERNAL_ERROR);
 		JSON_RPC_STATUES.add(HttpURLConnection.HTTP_BAD_REQUEST);
 		JSON_RPC_STATUES.add(HttpURLConnection.HTTP_NOT_FOUND);
 	}
-	
+
+	/**
+	 * Determines if the is an client-side or server-side error in the given {@code response}.
+	 */
 	@Override
 	public boolean hasError(ClientHttpResponse response)
 			throws IOException {
@@ -52,10 +57,13 @@ public enum JsonRpcResponseErrorHandler
 				httpStatus.series() == HttpStatus.Series.CLIENT_ERROR ||
 						httpStatus.series() == HttpStatus.Series.SERVER_ERROR;
 	}
-	
+
+	/**
+	 * Throws an RestClientException representing the error in given {@code response}.
+	 */
 	@Override
 	public void handleError(ClientHttpResponse response)
-			throws IOException {
+			throws RestClientException, IOException {
 		final HttpStatus statusCode = getHttpStatusCode(response);
 		
 		switch (statusCode.series()) {
@@ -69,9 +77,12 @@ public enum JsonRpcResponseErrorHandler
 				throw new RestClientException("Unknown status code [" + statusCode + "]");
 		}
 	}
-	
-	
-	private HttpStatus getHttpStatusCode(ClientHttpResponse response) throws IOException {
+
+	/**
+	 * Returns HTTP status code, or throws {@link UnknownHttpStatusCodeException}, if sttus code
+	 * can not be determined.
+	 */
+	protected HttpStatus getHttpStatusCode(ClientHttpResponse response) throws IOException {
 		final HttpStatus statusCode;
 		try {
 			statusCode = response.getStatusCode();
@@ -81,8 +92,11 @@ public enum JsonRpcResponseErrorHandler
 		}
 		return statusCode;
 	}
-	
-	private byte[] getResponseBody(ClientHttpResponse response) {
+
+	/**
+	 * Returns response body, or throws {@link RuntimeException} if body can not be read.
+	 */
+	protected byte[] getResponseBody(ClientHttpResponse response) {
 		try {
 			final InputStream responseBody = response.getBody();
 			if (responseBody != null) {
@@ -93,11 +107,11 @@ public enum JsonRpcResponseErrorHandler
 		}
 		return new byte[0];
 	}
-	
-	private Charset getCharset(ClientHttpResponse response) {
+
+	protected Charset getCharset(ClientHttpResponse response) {
 		HttpHeaders headers = response.getHeaders();
 		MediaType contentType = headers.getContentType();
-		return contentType != null ? contentType.getCharSet() : null;
+		return contentType != null ? contentType.getCharset() : null;
 	}
 	
 }
